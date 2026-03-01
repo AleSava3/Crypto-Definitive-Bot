@@ -24,18 +24,29 @@ def generate_signal(symbol):
     if not signal:
         return None
 
+    if signal["level"] == "HIGH" and state.high_today >= MAX_HIGH_PER_DAY:
+        return None
+
     if signal["level"] == "HIGH":
-        if state.high_today >= MAX_HIGH_PER_DAY:
-            return None
+        target = 20
+    elif signal["level"] == "MEDIUM":
+        target = 12
+    else:
+        target = 6
 
     risk_data = calculate_risk(
         signal["entry"],
         signal["stop"],
         CAPITAL,
-        TARGET_HIGH_PROFIT if signal["level"]=="HIGH" else 10,
+        target,
         MAX_LEVERAGE
     )
 
+    state.signals_today += 1
+    if signal["level"] == "HIGH":
+        state.high_today += 1
+
+    return signal, risk_data
     state.signals_today += 1
     if signal["level"]=="HIGH":
         state.high_today += 1
