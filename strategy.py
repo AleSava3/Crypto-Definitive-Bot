@@ -18,32 +18,43 @@ def analyze(symbol):
     last = df.iloc[-1]
     score = 0
 
+    # TREND
     if last["ema50"] > last["ema200"]:
         direction = "LONG"
-        score += 25
+        score += 20
     else:
         direction = "SHORT"
-        score += 25
+        score += 20
 
-    if 45 < last["rsi"] < 60:
+    # RSI
+    if 40 < last["rsi"] < 65:
         score += 15
 
-    if last["macd"] > 0:
+    # MACD
+    if (direction == "LONG" and last["macd"] > 0) or \
+       (direction == "SHORT" and last["macd"] < 0):
         score += 15
 
-    if last["v"] > df["v"].rolling(20).mean().iloc[-1]:
+    # Volume
+    vol_mean = df["v"].rolling(20).mean().iloc[-1]
+    if last["v"] > vol_mean * 0.8:
         score += 15
 
-    if last["atr"] > df["atr"].rolling(20).mean().iloc[-1]:
+    # ATR
+    if last["atr"] > df["atr"].rolling(20).mean().iloc[-1] * 0.8:
         score += 15
+
+    # Pullback EMA21
+    if abs(last["c"] - last["ema21"]) / last["c"] < 0.003:
+        score += 20
 
     entry = last["c"]
-    stop = entry * 0.996 if direction == "LONG" else entry * 1.004
-    tp = entry * 1.02 if direction == "LONG" else entry * 0.98
+    stop = entry * 0.997 if direction == "LONG" else entry * 1.003
+    tp = entry * 1.015 if direction == "LONG" else entry * 0.985
 
-    if score >= 75:
+    if score >= 70:
         level = "HIGH"
-    elif score >= 50:
+    elif score >= 45:
         level = "MEDIUM"
     else:
         level = "LOW"
