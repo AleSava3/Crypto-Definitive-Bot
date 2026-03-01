@@ -1,12 +1,12 @@
+import asyncio
+from telegram import Bot
+import os
+
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+
 async def main():
-    print("Test invio messaggio...")
-    await send("✅ TEST BOT ATTIVO")
+    bot = Bot(token=TOKEN)
+    await bot.send_message(chat_id=CHAT_ID, text="🔥 TEST DIRETTO FUNZIONA")
 
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(scan, "interval", minutes=15)
-    scheduler.start()
-
-    print("Bot avviato correttamente 🚀")
-
-    while True:
-        await asyncio.sleep(60)
+asyncio.run(main())
