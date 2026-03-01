@@ -1,15 +1,18 @@
 def calculate_risk(entry, stop, capital, target_profit, max_leverage):
     move_percent = abs(entry - stop) / entry
-    position_size = target_profit / move_percent
 
+    if move_percent == 0:
+        return None
+
+    position_size = target_profit / move_percent
     leverage = position_size / capital
+
     if leverage > max_leverage:
         leverage = max_leverage
         position_size = capital * leverage
 
     margin = position_size / leverage
     risk = position_size * move_percent
-
     rr = target_profit / risk if risk != 0 else 0
 
     return {
