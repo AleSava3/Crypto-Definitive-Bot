@@ -1,0 +1,23 @@
+import os
+
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+
+CAPITAL = 200
+TARGET_HIGH_PROFIT = 20
+MAX_LEVERAGE = 25
+
+MAX_SIGNALS_PER_DAY = 20
+MAX_HIGH_PER_DAY = 3
+
+TIMEZONE = "Europe/Rome"
+START_HOUR = 8
+END_HOUR = 22
+
+SYMBOLS = [
+    "BTC/USDT",
+    "ETH/USDT",
+    "SOL/USDT",
+    "BNB/USDT",
+    "XRP/USDT",
+]
