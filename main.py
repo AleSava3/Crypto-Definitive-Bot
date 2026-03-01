@@ -4,15 +4,11 @@ from config import SYMBOLS
 from signal_engine import generate_signal
 from telegram_bot import send
 
-
 async def scan():
     print("🔍 Scan avviato")
     for symbol in SYMBOLS:
-        print(f"Analizzo {symbol}")
         result = generate_signal(symbol)
-
         if result:
-            print(f"Segnale trovato su {symbol}")
             signal, risk = result
 
             msg = f"""
@@ -29,25 +25,27 @@ Size: {risk['size']} USDT
 Margine: {risk['margin']}€
 
 Rischio: {risk['risk']}€
-Target Profit: 20€
-R:R: {risk['rr']}
+Target: {'20€' if signal['level']=='HIGH' else '12€' if signal['level']=='MEDIUM' else '6€'}
 
+R:R: {risk['rr']}
 Score: {signal['score']}/100
 """
             await send(msg)
-
 
 async def main():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(scan, "interval", minutes=15)
     scheduler.start()
 
-    print("🚀 Bot avviato correttamente")
+    print("🚀 Bot avviato")
 
-    # Avvio scan immediato al boot
     await scan()
 
     while True:
+        await asyncio.sleep(60)
+
+if __name__ == "__main__":
+    asyncio.run(main())
         await asyncio.sleep(60)
 
 
