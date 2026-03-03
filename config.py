@@ -13,11 +13,11 @@ TIMEZONE = "Europe/Rome"
 START_HOUR = 0
 END_HOUR = 23
 
-# Bybit Linear USDT Perpetual
+# Yahoo Finance crypto symbols
 SYMBOLS = [
-    "BTC/USDT:USDT",
-    "ETH/USDT:USDT",
-    "SOL/USDT:USDT",
-    "BNB/USDT:USDT",
-    "XRP/USDT:USDT",
+    "BTC-USD",
+    "ETH-USD",
+    "SOL-USD",
+    "BNB-USD",
+    "XRP-USD",
 ]
