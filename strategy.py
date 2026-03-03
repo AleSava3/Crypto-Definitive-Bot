@@ -20,15 +20,17 @@ def analyze(symbol):
     if df.empty or len(df) < 50:
         return None
 
+    # Se MultiIndex (può succedere), lo appiattiamo
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
     df = df.reset_index()
 
-    # 🔥 RENDIAMO LE COLONNE 1D SICURE
-    close = df["Close"].squeeze()
-    high = df["High"].squeeze()
-    low = df["Low"].squeeze()
-    volume = df["Volume"].squeeze()
-
-    score = 0
+    # Forziamo tutto a float 1D
+    close = pd.Series(df["Close"]).astype(float)
+    high = pd.Series(df["High"]).astype(float)
+    low = pd.Series(df["Low"]).astype(float)
+    volume = pd.Series(df["Volume"]).astype(float)
 
     df["ema21"] = ta.trend.ema_indicator(close, 21)
     df["ema50"] = ta.trend.ema_indicator(close, 50)
@@ -37,10 +39,22 @@ def analyze(symbol):
     df["macd"] = ta.trend.macd_diff(close)
     df["atr"] = ta.volatility.average_true_range(high, low, close)
 
-    last = df.iloc[-1]
+    # Prendiamo SOLO L’ULTIMO VALORE come float puro
+    ema50 = float(df["ema50"].iloc[-1])
+    ema200 = float(df["ema200"].iloc[-1])
+    rsi = float(df["rsi"].iloc[-1])
+    macd = float(df["macd"].iloc[-1])
+    atr = float(df["atr"].iloc[-1])
+    close_price = float(close.iloc[-1])
+    volume_last = float(volume.iloc[-1])
+    vol_mean = float(volume.rolling(20).mean().iloc[-1])
+    atr_mean = float(df["atr"].rolling(20).mean().iloc[-1])
+    ema21_last = float(df["ema21"].iloc[-1])
+
+    score = 0
 
     # TREND
-    if last["ema50"] > last["ema200"]:
+    if ema50 > ema200:
         direction = "LONG"
         score += 20
     else:
@@ -48,29 +62,27 @@ def analyze(symbol):
         score += 20
 
     # RSI
-    if 40 < last["rsi"] < 65:
+    if 40 < rsi < 65:
         score += 15
 
     # MACD
-    if (direction == "LONG" and last["macd"] > 0) or \
-       (direction == "SHORT" and last["macd"] < 0):
+    if (direction == "LONG" and macd > 0) or \
+       (direction == "SHORT" and macd < 0):
         score += 15
 
     # Volume
-    vol_mean = volume.rolling(20).mean().iloc[-1]
-    if last["Volume"] > vol_mean * 0.8:
+    if volume_last > vol_mean * 0.8:
         score += 15
 
     # ATR
-    atr_mean = df["atr"].rolling(20).mean().iloc[-1]
-    if last["atr"] > atr_mean * 0.8:
+    if atr > atr_mean * 0.8:
         score += 15
 
     # Pullback EMA21
-    if abs(last["Close"] - last["ema21"]) / last["Close"] < 0.003:
+    if abs(close_price - ema21_last) / close_price < 0.003:
         score += 20
 
-    entry = last["Close"]
+    entry = close_price
     stop = entry * 0.997 if direction == "LONG" else entry * 1.003
     tp = entry * 1.015 if direction == "LONG" else entry * 0.985
 
@@ -84,9 +96,9 @@ def analyze(symbol):
     return {
         "symbol": symbol,
         "direction": direction,
-        "entry": float(entry),
-        "stop": float(stop),
-        "tp": float(tp),
+        "entry": entry,
+        "stop": stop,
+        "tp": tp,
         "score": score,
         "level": level
     }
