@@ -2,10 +2,21 @@ import ccxt
 import pandas as pd
 import ta
 
-exchange = ccxt.binance()
+# Bybit Linear Futures
+exchange = ccxt.bybit({
+    "enableRateLimit": True,
+    "options": {
+        "defaultType": "linear"
+    }
+})
 
 def analyze(symbol):
-    ohlcv = exchange.fetch_ohlcv(symbol, timeframe="15m", limit=200)
+    try:
+        ohlcv = exchange.fetch_ohlcv(symbol, timeframe="15m", limit=200)
+    except Exception as e:
+        print(f"Errore fetch {symbol}: {e}")
+        return None
+
     df = pd.DataFrame(ohlcv, columns=["t","o","h","l","c","v"])
 
     df["ema21"] = ta.trend.ema_indicator(df["c"], 21)
@@ -18,7 +29,7 @@ def analyze(symbol):
     last = df.iloc[-1]
     score = 0
 
-    # TREND
+    # Trend
     if last["ema50"] > last["ema200"]:
         direction = "LONG"
         score += 20
