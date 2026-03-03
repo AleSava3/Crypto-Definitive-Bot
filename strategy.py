@@ -2,13 +2,16 @@ import pandas as pd
 import ta
 import yfinance as yf
 
+
 def analyze(symbol):
     try:
         df = yf.download(
             symbol,
             interval="15m",
             period="3d",
-            progress=False
+            progress=False,
+            auto_adjust=False,
+            threads=False
         )
     except Exception as e:
         print(f"Errore fetch {symbol}: {e}")
@@ -19,19 +22,24 @@ def analyze(symbol):
 
     df = df.reset_index()
 
-    df["ema21"] = ta.trend.ema_indicator(df["Close"], 21)
-    df["ema50"] = ta.trend.ema_indicator(df["Close"], 50)
-    df["ema200"] = ta.trend.ema_indicator(df["Close"], 200)
-    df["rsi"] = ta.momentum.rsi(df["Close"], 14)
-    df["macd"] = ta.trend.macd_diff(df["Close"])
-    df["atr"] = ta.volatility.average_true_range(
-        df["High"], df["Low"], df["Close"]
-    )
+    # 🔥 RENDIAMO LE COLONNE 1D SICURE
+    close = df["Close"].squeeze()
+    high = df["High"].squeeze()
+    low = df["Low"].squeeze()
+    volume = df["Volume"].squeeze()
 
-    last = df.iloc[-1]
     score = 0
 
-    # Trend
+    df["ema21"] = ta.trend.ema_indicator(close, 21)
+    df["ema50"] = ta.trend.ema_indicator(close, 50)
+    df["ema200"] = ta.trend.ema_indicator(close, 200)
+    df["rsi"] = ta.momentum.rsi(close, 14)
+    df["macd"] = ta.trend.macd_diff(close)
+    df["atr"] = ta.volatility.average_true_range(high, low, close)
+
+    last = df.iloc[-1]
+
+    # TREND
     if last["ema50"] > last["ema200"]:
         direction = "LONG"
         score += 20
@@ -49,12 +57,13 @@ def analyze(symbol):
         score += 15
 
     # Volume
-    vol_mean = df["Volume"].rolling(20).mean().iloc[-1]
+    vol_mean = volume.rolling(20).mean().iloc[-1]
     if last["Volume"] > vol_mean * 0.8:
         score += 15
 
     # ATR
-    if last["atr"] > df["atr"].rolling(20).mean().iloc[-1] * 0.8:
+    atr_mean = df["atr"].rolling(20).mean().iloc[-1]
+    if last["atr"] > atr_mean * 0.8:
         score += 15
 
     # Pullback EMA21
@@ -75,9 +84,9 @@ def analyze(symbol):
     return {
         "symbol": symbol,
         "direction": direction,
-        "entry": entry,
-        "stop": stop,
-        "tp": tp,
+        "entry": float(entry),
+        "stop": float(stop),
+        "tp": float(tp),
         "score": score,
         "level": level
     }
