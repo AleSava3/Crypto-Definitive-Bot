@@ -1,30 +1,32 @@
-import ccxt
 import pandas as pd
 import ta
-
-# Bybit Linear Futures
-exchange = ccxt.bybit({
-    "enableRateLimit": True,
-    "options": {
-        "defaultType": "linear"
-    }
-})
+import yfinance as yf
 
 def analyze(symbol):
     try:
-        ohlcv = exchange.fetch_ohlcv(symbol, timeframe="15m", limit=200)
+        df = yf.download(
+            symbol,
+            interval="15m",
+            period="3d",
+            progress=False
+        )
     except Exception as e:
         print(f"Errore fetch {symbol}: {e}")
         return None
 
-    df = pd.DataFrame(ohlcv, columns=["t","o","h","l","c","v"])
+    if df.empty or len(df) < 50:
+        return None
 
-    df["ema21"] = ta.trend.ema_indicator(df["c"], 21)
-    df["ema50"] = ta.trend.ema_indicator(df["c"], 50)
-    df["ema200"] = ta.trend.ema_indicator(df["c"], 200)
-    df["rsi"] = ta.momentum.rsi(df["c"], 14)
-    df["macd"] = ta.trend.macd_diff(df["c"])
-    df["atr"] = ta.volatility.average_true_range(df["h"], df["l"], df["c"])
+    df = df.reset_index()
+
+    df["ema21"] = ta.trend.ema_indicator(df["Close"], 21)
+    df["ema50"] = ta.trend.ema_indicator(df["Close"], 50)
+    df["ema200"] = ta.trend.ema_indicator(df["Close"], 200)
+    df["rsi"] = ta.momentum.rsi(df["Close"], 14)
+    df["macd"] = ta.trend.macd_diff(df["Close"])
+    df["atr"] = ta.volatility.average_true_range(
+        df["High"], df["Low"], df["Close"]
+    )
 
     last = df.iloc[-1]
     score = 0
@@ -47,8 +49,8 @@ def analyze(symbol):
         score += 15
 
     # Volume
-    vol_mean = df["v"].rolling(20).mean().iloc[-1]
-    if last["v"] > vol_mean * 0.8:
+    vol_mean = df["Volume"].rolling(20).mean().iloc[-1]
+    if last["Volume"] > vol_mean * 0.8:
         score += 15
 
     # ATR
@@ -56,10 +58,10 @@ def analyze(symbol):
         score += 15
 
     # Pullback EMA21
-    if abs(last["c"] - last["ema21"]) / last["c"] < 0.003:
+    if abs(last["Close"] - last["ema21"]) / last["Close"] < 0.003:
         score += 20
 
-    entry = last["c"]
+    entry = last["Close"]
     stop = entry * 0.997 if direction == "LONG" else entry * 1.003
     tp = entry * 1.015 if direction == "LONG" else entry * 0.985
 
