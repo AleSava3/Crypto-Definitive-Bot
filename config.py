@@ -13,10 +13,11 @@ TIMEZONE = "Europe/Rome"
 START_HOUR = 0
 END_HOUR = 23
 
+# Bybit Linear USDT Perpetual
 SYMBOLS = [
-    "BTC/USDT",
-    "ETH/USDT",
-    "SOL/USDT",
-    "BNB/USDT",
-    "XRP/USDT",
+    "BTC/USDT:USDT",
+    "ETH/USDT:USDT",
+    "SOL/USDT:USDT",
+    "BNB/USDT:USDT",
+    "XRP/USDT:USDT",
 ]
