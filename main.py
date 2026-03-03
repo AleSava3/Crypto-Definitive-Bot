@@ -4,6 +4,7 @@ from config import SYMBOLS
 from signal_engine import generate_signal
 from telegram_bot import send
 
+
 async def scan():
     print("🔍 Scan avviato")
     for symbol in SYMBOLS:
@@ -32,6 +33,7 @@ Score: {signal['score']}/100
 """
             await send(msg)
 
+
 async def main():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(scan, "interval", minutes=15)
@@ -42,10 +44,6 @@ async def main():
     await scan()
 
     while True:
-        await asyncio.sleep(60)
-
-if __name__ == "__main__":
-    asyncio.run(main())
         await asyncio.sleep(60)
 
 
